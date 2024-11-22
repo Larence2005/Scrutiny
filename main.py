@@ -122,7 +122,7 @@ def visualize_data(data):
 
 def main():
     st.title("Scrunity AI")
-    st.write("Your AI analyzer for complex data sets")
+    st.subheader("Your AI analyzer for complex data sets")
     st.write("\n")
     st.write("This tool will analyze and provide insights automatically.")
 
