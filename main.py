@@ -68,11 +68,13 @@ def visualize_data(data):
         elif graph_type == "Bar Chart":
             fig, ax = plt.subplots(figsize=(8, 5))
             sns.countplot(x=data[col], ax=ax, palette="Set2")
+            plt.xticks(rotation=45, ha="right")  # Slant the x-axis labels
             st.pyplot(fig)
 
         elif graph_type == "Count Plot":
             fig, ax = plt.subplots(figsize=(8, 5))
             sns.countplot(x=data[col], ax=ax)
+            plt.xticks(rotation=45, ha="right")  # Slant the x-axis labels
             st.pyplot(fig)
 
     # Correlation heatmap for numerical columns
@@ -120,7 +122,7 @@ def visualize_data(data):
 
 def main():
     st.title("Scrunity AI")
-    st.header("Your AI analyzer for complex data sets")
+    st.write("Your AI analyzer for complex data sets")
     st.write("\n")
     st.write("This tool will analyze and provide insights automatically.")
 
@@ -129,7 +131,7 @@ def main():
         data = load_data(uploaded_file)
         if data is not None:
             st.subheader("Data Preview")
-            st.write(data.head())
+            st.dataframe(data)  # Ensure the full data is shown with scrollable columns
 
             st.subheader("Data Summary")
             st.write(data.describe())
