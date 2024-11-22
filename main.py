@@ -119,8 +119,10 @@ def visualize_data(data):
         st.pyplot(fig)
 
 def main():
-    st.title("Dynamic Dataset Analyzer")
-    st.write("Upload your dataset, and this tool will analyze and provide insights automatically.")
+    st.title("Scrunity AI")
+    st.header("Your AI analyzer for complex data sets")
+    st.write("\n")
+    st.write("This tool will analyze and provide insights automatically.")
 
     uploaded_file = st.file_uploader("Upload your dataset (CSV or Excel):", type=['csv', 'xlsx'])
     if uploaded_file:
