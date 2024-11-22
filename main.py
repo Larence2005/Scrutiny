@@ -3,10 +3,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.metrics import mean_squared_error, accuracy_score
 
 def load_data(file):
     if file.name.endswith('.csv'):
@@ -21,112 +17,109 @@ def visualize_data(data):
     st.subheader("Data Visualization")
     st.write("Automatically generated plots:")
 
-    # Get numeric columns for visualization
+    # Get numeric and categorical columns for visualization
     numeric_cols = data.select_dtypes(include=np.number).columns.tolist()
     categorical_cols = data.select_dtypes(include=['object', 'category']).columns.tolist()
 
-    # For Numeric Columns - Histograms and Boxplots
+    # For Numeric Columns - Histograms, Boxplots, Line Charts, Scatter Plots, etc.
     for col in numeric_cols:
-        st.write(f"Distribution of {col} (Histogram):")
-        fig, ax = plt.subplots()
-        sns.histplot(data[col], kde=True, ax=ax)
-        st.pyplot(fig)
+        st.write(f"Visualize {col}:")
+        graph_type = st.selectbox(f"Select graph type for {col}:", ["Histogram", "Box Plot", "Scatter Plot", "Line Chart", "Area Chart", "None"], key=f"num_{col}")
 
-        st.write(f"{col} (Box Plot to detect outliers):")
-        fig, ax = plt.subplots()
-        sns.boxplot(x=data[col], ax=ax)
-        st.pyplot(fig)
+        if graph_type == "Histogram":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            sns.histplot(data[col], kde=True, ax=ax)
+            st.pyplot(fig)
 
-    # For Numeric Columns - Scatter Plots
-    if len(numeric_cols) > 1:
-        st.write("Scatter Plots between numeric columns:")
-        for i in range(len(numeric_cols)):
-            for j in range(i + 1, len(numeric_cols)):
-                fig, ax = plt.subplots()
-                sns.scatterplot(x=data[numeric_cols[i]], y=data[numeric_cols[j]], ax=ax)
-                st.pyplot(fig)
+        elif graph_type == "Box Plot":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            sns.boxplot(x=data[col], ax=ax)
+            st.pyplot(fig)
 
-    # For Categorical Columns - Pie Charts
+        elif graph_type == "Scatter Plot":
+            if len(numeric_cols) > 1:
+                other_col = st.selectbox(f"Select another column to plot with {col}:", numeric_cols, key=f"scatter_{col}")
+                if other_col != col:
+                    fig, ax = plt.subplots(figsize=(8, 5))
+                    sns.scatterplot(x=data[col], y=data[other_col], ax=ax)
+                    st.pyplot(fig)
+
+        elif graph_type == "Line Chart":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            data[col].plot(kind='line', ax=ax)
+            st.pyplot(fig)
+
+        elif graph_type == "Area Chart":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            data[col].plot(kind='area', ax=ax, alpha=0.3)
+            st.pyplot(fig)
+
+    # For Categorical Columns - Pie Charts, Bar Charts, Count Plots
     for col in categorical_cols:
-        st.write(f"Distribution of {col} (Pie Chart):")
-        fig, ax = plt.subplots()
-        data[col].value_counts().plot.pie(autopct='%1.1f%%', startangle=90, ax=ax, colors=sns.color_palette("Set3", len(data[col].unique())))
-        ax.set_ylabel('')
-        st.pyplot(fig)
+        st.write(f"Visualize {col}:")
+        graph_type = st.selectbox(f"Select graph type for {col}:", ["Pie Chart", "Bar Chart", "Count Plot", "None"], key=f"cat_{col}")
 
-    # For Categorical Columns - Bar Charts
-    for col in categorical_cols:
-        st.write(f"Distribution of {col} (Bar Chart):")
-        fig, ax = plt.subplots()
-        sns.countplot(x=data[col], ax=ax, palette="Set2")
-        st.pyplot(fig)
+        if graph_type == "Pie Chart":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            data[col].value_counts().plot.pie(autopct='%1.1f%%', startangle=90, ax=ax, colors=sns.color_palette("Set3", len(data[col].unique())))
+            ax.set_ylabel('')
+            st.pyplot(fig)
+
+        elif graph_type == "Bar Chart":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            sns.countplot(x=data[col], ax=ax, palette="Set2")
+            st.pyplot(fig)
+
+        elif graph_type == "Count Plot":
+            fig, ax = plt.subplots(figsize=(8, 5))
+            sns.countplot(x=data[col], ax=ax)
+            st.pyplot(fig)
 
     # Correlation heatmap for numerical columns
     if len(numeric_cols) > 1:
-        st.write("Correlation heatmap:")
-        fig, ax = plt.subplots(figsize=(10, 8))
+        st.write("Correlation heatmap for numeric variables:")
+        fig, ax = plt.subplots(figsize=(12, 8))
         corr_matrix = data[numeric_cols].corr()
         sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', ax=ax, fmt='.2f', linewidths=0.5, cbar_kws={'shrink': 0.8})
         st.pyplot(fig)
 
-def apply_ml(data):
-    st.subheader("Machine Learning Insights")
-    target_column = st.selectbox("Select the target column for prediction:", data.columns)
+    # Pairplot for all numeric variables
+    if len(numeric_cols) > 1:
+        st.write("Pairplot for numeric variables:")
+        fig = sns.pairplot(data[numeric_cols])
+        st.pyplot(fig)
 
-    if target_column:
-        X = data.drop(columns=[target_column])
-        y = data[target_column]
+    # Distribution of each numeric column using box plot
+    if len(numeric_cols) > 0:
+        st.write("Distribution of all numeric variables:")
+        fig, ax = plt.subplots(figsize=(10, 5))
+        sns.boxplot(data=data[numeric_cols], ax=ax)
+        st.pyplot(fig)
 
-        # Handling categorical and numerical data
-        if X.select_dtypes(include=np.number).shape[1] == 0:
-            st.error("All feature columns are non-numeric, unable to perform ML.")
-            return
+    # Heatmap of categorical column values
+    if len(categorical_cols) > 0:
+        st.write("Heatmap for categorical columns:")
+        fig, ax = plt.subplots(figsize=(12, 8))
+        heatmap_data = pd.crosstab(index=data[categorical_cols[0]], columns=data[categorical_cols[1]] if len(categorical_cols) > 1 else data[categorical_cols[0]])
+        sns.heatmap(heatmap_data, annot=True, fmt='d', cmap='Blues', ax=ax)
+        st.pyplot(fig)
 
-        # One-hot encoding categorical features
-        X = pd.get_dummies(X, drop_first=True)
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Violin Plot for numeric columns
+    if len(numeric_cols) > 1:
+        st.write("Violin plot for numeric variables:")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.violinplot(data=data[numeric_cols], ax=ax)
+        st.pyplot(fig)
 
-        # Apply Linear Regression if the target is numeric
-        if y.dtype in ['int64', 'float64'] and y.nunique() > 2:
-            st.write("Applying Linear Regression...")
-            lr = LinearRegression()
-            lr.fit(X_train, y_train)
-            y_pred = lr.predict(X_test)
-            mse = mean_squared_error(y_test, y_pred)
-            st.write(f"Mean Squared Error (Linear Regression): {mse:.2f}")
-
-            # Suggestion based on MSE
-            if mse > 1000:  # Adjust threshold as per your dataset scale
-                st.warning("The model has a high error. Consider feature engineering or tuning the model.")
-
-            # Apply Random Forest Regression
-            st.write("Applying Random Forest Regressor...")
-            rf = RandomForestRegressor(random_state=42)
-            rf.fit(X_train, y_train)
-            y_pred = rf.predict(X_test)
-            mse_rf = mean_squared_error(y_test, y_pred)
-            st.write(f"Mean Squared Error (Random Forest): {mse_rf:.2f}")
-            
-            if mse_rf < mse:
-                st.success("Random Forest Regressor performed better. Consider using it for prediction.")
-            else:
-                st.warning("Random Forest Regressor did not perform better. Try tuning the hyperparameters.")
-
-        # Apply Random Forest Classifier if the target is categorical
-        else:
-            st.write("Applying Random Forest Classifier...")
-            rf = RandomForestClassifier(random_state=42)
-            rf.fit(X_train, y_train)
-            y_pred = rf.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
-            st.write(f"Accuracy (Random Forest): {acc:.2f}")
-            
-            # Suggestion based on accuracy
-            if acc < 0.7:
-                st.warning("The model has low accuracy. Try tuning the model or adding more features.")
+    # KDE Plot for numeric columns
+    if len(numeric_cols) > 1:
+        st.write("KDE plot for numeric variables:")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.kdeplot(data=data[numeric_cols[0]], shade=True, ax=ax)
+        st.pyplot(fig)
 
 def main():
-    st.title("AI-Powered Dataset Analyzer")
+    st.title("Dynamic Dataset Analyzer")
     st.write("Upload your dataset, and this tool will analyze and provide insights automatically.")
 
     uploaded_file = st.file_uploader("Upload your dataset (CSV or Excel):", type=['csv', 'xlsx'])
@@ -141,9 +134,6 @@ def main():
 
             if st.checkbox("Visualize Data"):
                 visualize_data(data)
-
-            if st.checkbox("Apply Machine Learning"):
-                apply_ml(data)
 
 if __name__ == "__main__":
     main()
